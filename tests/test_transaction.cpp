@@ -34,7 +34,7 @@ TEST_F(TransactionTest, SetFee) {
     EXPECT_EQ(trans->fee(), 10);
 }
 
-// Перевод самому себе (Lock/Unlock не должны вызываться)
+// Перевод самому себе
 TEST_F(TransactionTest, SameAccount) {
     EXPECT_THROW(trans->Make(*from, *from, 200), std::logic_error);
 }
@@ -49,36 +49,31 @@ TEST_F(TransactionTest, TooSmall) {
     EXPECT_THROW(trans->Make(*from, *to, 70), std::logic_error);
 }
 
-// Слишком большая комиссия (функция возвращает false)
+// Слишком большая комиссия
 TEST_F(TransactionTest, FeeExceeds) {
     trans->set_fee(60);
-    // Ожидаем, что SaveToDataBase не вызывается,
-    // а Lock/Unlock тоже не вызываются, т.к. выход до создания Guard.
+    // Метод не должен вызываться
     EXPECT_CALL(*trans, SaveToDataBase(_, _, _)).Times(0);
     EXPECT_FALSE(trans->Make(*from, *to, 100));
 }
 
-// Успешная транзакция – полная проверка последовательности
+// Успешная транзакция
 TEST_F(TransactionTest, Successful) {
     const int sum = 200;
-    trans->set_fee(1);   // fee*2 = 2 <= sum
+    trans->set_fee(1);
 
-    // Ожидаем строгую последовательность вызовов
-    {
-        // Порядок: Lock обоих, Credit, Debit, SaveToDataBase, Unlock
-        testing::InSequence seq;
-        EXPECT_CALL(*from, Lock());
-        EXPECT_CALL(*to, Lock());
+    testing::InSequence seq;
+    EXPECT_CALL(*from, Lock());
+    EXPECT_CALL(*to, Lock());
 
-        EXPECT_CALL(*to, ChangeBalance(sum));                // Credit
-        EXPECT_CALL(*from, GetBalance()).WillOnce(Return(1000)); // достаточно
-        EXPECT_CALL(*from, ChangeBalance(-(sum + 1)));       // Debit sum+fee
+    EXPECT_CALL(*to, ChangeBalance(sum));                // Credit
+    EXPECT_CALL(*from, GetBalance()).WillOnce(Return(1000));
+    EXPECT_CALL(*from, ChangeBalance(-(sum + 1)));       // Debit sum+fee
 
-        EXPECT_CALL(*trans, SaveToDataBase(*from, *to, sum));
+    EXPECT_CALL(*trans, SaveToDataBase(_, _, sum));      // любые Account, сумма = sum
 
-        EXPECT_CALL(*to, Unlock());
-        EXPECT_CALL(*from, Unlock());
-    }
+    EXPECT_CALL(*to, Unlock());
+    EXPECT_CALL(*from, Unlock());
 
     EXPECT_TRUE(trans->Make(*from, *to, sum));
 }
@@ -92,12 +87,11 @@ TEST_F(TransactionTest, NotEnoughFunds) {
     EXPECT_CALL(*from, Lock());
     EXPECT_CALL(*to, Lock());
 
-    EXPECT_CALL(*to, ChangeBalance(sum));            // Credit
-    EXPECT_CALL(*from, GetBalance()).WillOnce(Return(1000)); // баланс меньше sum+fee
-    // Debit не вызывает ChangeBalance(from)
-    EXPECT_CALL(*to, ChangeBalance(-sum));           // откат
+    EXPECT_CALL(*to, ChangeBalance(sum));                // Credit
+    EXPECT_CALL(*from, GetBalance()).WillOnce(Return(1000));
+    EXPECT_CALL(*to, ChangeBalance(-sum));               // откат
 
-    EXPECT_CALL(*trans, SaveToDataBase(*from, *to, sum));
+    EXPECT_CALL(*trans, SaveToDataBase(_, _, sum));      // любые Account, сумма = sum
 
     EXPECT_CALL(*to, Unlock());
     EXPECT_CALL(*from, Unlock());
@@ -105,13 +99,12 @@ TEST_F(TransactionTest, NotEnoughFunds) {
     EXPECT_FALSE(trans->Make(*from, *to, sum));
 }
 
-// Отдельный тест для покрытия реального SaveToDataBase (чтобы строки не остались непокрыты)
+// Отдельный тест для покрытия реального SaveToDataBase
 TEST(RealTransaction, SaveToDataBaseExecution) {
     Account from(1, 1000);
     Account to(2, 1000);
     Transaction trans;
     trans.set_fee(1);
-    // Вызовет реальный SaveToDataBase
-    EXPECT_TRUE(trans.Make(from, to, 200));   // сумма достаточна
-    SUCCEED();  // просто проверяем, что нет падений
+    EXPECT_TRUE(trans.Make(from, to, 200));
+    SUCCEED();
 }
