@@ -16,7 +16,7 @@ if(BUILD_TESTS)
 
   file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
   add_executable(check ${TEST_SOURCES})
-  target_link_libraries(check bank_obj gtest_main gmock_main)
+  target_link_libraries(check banking gtest_main gmock_main)
 
   if(COLLECT_COVERAGE)
     target_link_libraries(check gcov)
