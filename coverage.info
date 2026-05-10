@@ -33,16 +33,6 @@ LF:13
 LH:13
 end_of_record
 TN:
-SF:/home/ilyasov_ilya/ferdosiakrymskaa-svg/workspace/projects/lab05/lab05/banking/Account.h
-FN:18,18,_ZNK7Account2idEv
-FNDA:0,_ZNK7Account2idEv
-FNF:1
-FNH:0
-DA:18,0
-LF:1
-LH:0
-end_of_record
-TN:
 SF:/home/ilyasov_ilya/ferdosiakrymskaa-svg/workspace/projects/lab05/lab05/banking/Transaction.cpp
 FN:12,12,_ZN12_GLOBAL__N_15GuardC2ER7Account
 FN:14,14,_ZN12_GLOBAL__N_15GuardD2Ev
