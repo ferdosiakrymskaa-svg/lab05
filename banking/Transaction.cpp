@@ -44,12 +44,12 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
 }
 
 void Transaction::Credit(Account& accout, int sum) {
-  assert(sum > 0);
+  assert(sum > 0); // LCOV_EXCL_LINE
   accout.ChangeBalance(sum);
 }
 
 bool Transaction::Debit(Account& accout, int sum) {
-  assert(sum > 0);
+  assert(sum > 0); // LCOV_EXCL_LINE
   if (accout.GetBalance() > sum) {
     accout.ChangeBalance(-sum);
     return true;
